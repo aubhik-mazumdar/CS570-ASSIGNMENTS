@@ -175,22 +175,58 @@ function newGame(){
 	let players=0;
 	let board_size=0;
 	let win_sequence=0;
+
 	console.log("Welcome to a New Game");
-	players = readline.question("Enter the number of players(minimum 2, maximum 26):");
-	board_size= readline.question("Enter the size of the board(minimum 3, maximum 999:");
-	win_sequence= readline.question("Enter the winning sequence count:");
-	if(win_sequence<3){
-		console.error("ERROR- Please enter a winning sequence count > 2");
+	
+	players = readline.question("Enter the number of players :");
+	
+	if (players<2||players>26){
+	console.error("Enter valid number of players between 2 to 26");
+	Error;
+	}
+		else {
+		board_size= readline.question("Enter the size of the board :");
+		
+
+		if(board_size<3 || players>999){
+		console.error("Enter valid board size between 3 to 999");
 		Error;
-	}
-	if(parseInt(win_sequence) > parseInt(board_size)){
-		console.error("ERROR- I think you need a bigger board");
+		}
+
+		else if(parseInt(board_size*board_size) < parseInt(players)){
+		console.error("Decrease number of players");
 		Error;
-	}
-	else
-	{
-		startGame(parseInt(players),parseInt(board_size),parseInt(win_sequence));
-	}
+		}
+		
+			else {
+			win_sequence= readline.question("Enter the winning sequence count:");
+
+			if(win_sequence<2){
+			console.error("Please enter a winning sequence count >= 2");
+			Error;
+			}
+
+			else if(win_sequence > board_size){
+				console.error("I think you need a bigger board");
+				Error;
+				}
+
+			else if(win_sequence==2 && players>8 && board_size==3){
+			console.error("Decrease number of players OR increase win sequence");
+			Error;
+					}
+	
+				//console.log(players,board_size,win_sequence);
+	
+				else
+				{
+				printboard(board_size);
+				//startGame();
+				}
+			}
+			
+		}
+	
 }
 
 
