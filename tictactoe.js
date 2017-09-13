@@ -9,19 +9,16 @@ function game(p,bs,w,arr){
 	this.array = arr;
 }
 
-let game1= new game(2,3,3,[[1,1,'X'],[1,2,'O'],[2,2,'X'],[3,3,'O']]);
-saveGame(game1);
-
-function saveGame(game){
-let obj=JSON.stringify(game);
-fs.writeFileSync("Solution.txt",obj);
-}
-
 function displayBoard(){
 /* -----
 	-----PRINT BOARD WITH SYMBOLS IN RIGHT PLACES
 	----
 */
+}
+
+function saveGame(game){
+let obj=JSON.stringify(game);
+fs.writeFileSync("Solution.txt",obj);
 }
 
 function arraysearch(arr1,arr2){
@@ -36,27 +33,67 @@ function arraysearch(arr1,arr2){
 	return flag;
 }
 
-function checkWin(lastmove,moves,win,bs){
-	let rn=0,cn=0,s='';
+function checkWin(lastmove,moves,win,bs,darray){
+	let rn=0,cn=0,s='',r=0,c=0,sym="",count=0;
 	[rn,cn,s]  = lastmove;
-	let wincount=1,i=0;
-	for (let i = 0; i < bs; i++){
-
+	let wincount=0,i=0,j=0,k=0;
+	for(i in moves){
+		r = parseInt(moves[i][0])-1;
+		c = parseInt(moves[i][1])-1;
+		sym = moves[i][2];
+		darray[r][c]= sym;
 	}
-}
 
-function checkCell(game){
+	//for each cell
+	for(i=0;i<bs;i++)
+	{
+		for(j=0;j<bs;j++)
+		{
+			//check for row
+			while(darray[i][j+k]==s)
+			{
+				k++;
+				wincount+=1;
+				if(wincount==win){
+					console.log("player " + s + " wins");
+					return; 
+				}
+			}
+			wincount=0;
+			k=0;
+			//check for column
+			while(darray[i+k][j]==s)
+			{
+				k++;
+				wincount+=1;
+				if(wincount==win){
+					console.log("player " + s + " wins");
+					return;
+				}
+			}
+			wincount=0;
+			k=0;
+			//check for diagonal
+			while(darray[i+k][j+k]==s)
+			{
+				k++;
+				wincount+=1;
+				if(wincount==win){
+					console.log("player " + s + " wins");
+					return;
+				}
+			}
+			wincount=0;
+			k=0;
+		}
+	}
+}	
 
-}
-
-function checkMove(gameObject,turn){
+function checkMove(gameObject,turn,darray){
 	displayBoard();
 	moves = gameObject["array"];
-	console.log(moves);
 	let lastMove = moves[moves.length-1];
-	console.log(lastMove);
-	let r=0;c=0;
-	return checkWin(lastMove,moves,gameObject['win_sequence'],gameObject['board_size']);
+	checkWin(lastMove,moves,gameObject['win_sequence'],gameObject['board_size'],darray);
 }
 
 function startGame(p,bs,w){
@@ -65,13 +102,16 @@ function startGame(p,bs,w){
 	let ngame= new game(p,bs,w,arr);
 	console.log(ngame); 
 	printboard(bs);
-	while(move=readline.question("Enter your move player "+ (turn % p) +" , row and column:")){
+	let darray = [];
+	for(i=0;i<bs;i++){
+		darray.push(Array(bs).fill(' '));
+	}
+	while(move=readline.question("Enter your move player "+ (turn % p) +" , row and column:"))
+	{
 		[row,column]=move.split(" ");
 		s=symbols.charAt(turn % p);
 		ngame["array"].push([row,column,s]);
-		//console.log(ngame);
-		//process.stdout.write(row.toString() + " " + column.toString() + " " + s);
-		checkMove(ngame,turn);
+		checkMove(ngame,turn,darray);
 		turn+=1;
 	}
 }
@@ -151,13 +191,12 @@ function newGame(){
 	{
 		startGame(parseInt(players),parseInt(board_size),parseInt(win_sequence));
 	}
-	//new newGame= game(players,board_size,win_sequence,array) 	
 }
 
 
 
-/** Using module 'readline-sync' **/
-
+/* Using module 'readline-sync' */
+//MAIN FUNCTION START
 let fileName = readline.question("Hello USER, enter the file name if you wish to load a saved game or press enter to start a new game:");
 if(fileName==''){
 	newGame();
@@ -165,4 +204,3 @@ if(fileName==''){
 else{
 	loadGame(fileName);
 }
-	
