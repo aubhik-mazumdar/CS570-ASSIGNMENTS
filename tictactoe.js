@@ -9,6 +9,14 @@ function game(p,bs,w,arr){
 	this.array = arr;
 }
 
+let game1= new game(2,3,3,[[1,1,'X'],[1,2,'O'],[2,2,'X'],[3,3,'O']]);
+saveGame(game1);
+
+function saveGame(game){
+let obj=JSON.stringify(game);
+fs.writeFileSync("Solution.txt",obj);
+}
+
 function displayBoard(){
 /* -----
 	-----PRINT BOARD WITH SYMBOLS IN RIGHT PLACES
