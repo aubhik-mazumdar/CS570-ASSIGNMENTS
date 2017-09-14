@@ -9,7 +9,8 @@ function game(p,bs,w,arr){
 	this.array = arr;
 }
 
-function displayBoard(){
+function displayBoard(chars){
+	console.log(chars);
 /* -----
 	-----PRINT BOARD WITH SYMBOLS IN RIGHT PLACES
 	----
@@ -34,7 +35,7 @@ function arraysearch(arr1,arr2){
 }
 
 function checkWin(lastmove,moves,win,bs,darray){
-	let rn=0,cn=0,s='',r=0,c=0,sym="",count=0;
+	let rn=0,cn=0,s='',r=0,c=0,sym="",count=0,chars = "";
 	[rn,cn,s]  = lastmove;
 	let wincount=0,i=0,j=0,k=0;
 	for(i in moves){
@@ -42,7 +43,9 @@ function checkWin(lastmove,moves,win,bs,darray){
 		c = parseInt(moves[i][1])-1;
 		sym = moves[i][2];
 		darray[r][c]= sym;
+		chars += sym;
 	}
+	displayBoard(chars);
 
 	//for each cell
 	for(i=0;i<bs;i++)
@@ -50,7 +53,7 @@ function checkWin(lastmove,moves,win,bs,darray){
 		for(j=0;j<bs;j++)
 		{
 			//check for row
-			while(darray[i][j+k]==s)
+			while(i<bs && j+k<bs && darray[i][j+k]==s)
 			{
 				k++;
 				wincount+=1;
@@ -62,7 +65,7 @@ function checkWin(lastmove,moves,win,bs,darray){
 			wincount=0;
 			k=0;
 			//check for column
-			while(darray[i+k][j]==s)
+			while(i+k<bs && j<bs && darray[i+k][j]==s)
 			{
 				k++;
 				wincount+=1;
@@ -74,7 +77,7 @@ function checkWin(lastmove,moves,win,bs,darray){
 			wincount=0;
 			k=0;
 			//check for diagonal
-			while(darray[i+k][j+k]==s)
+			while(i+k<bs && j+k<bs && darray[i+k][j+k]==s)
 			{
 				k++;
 				wincount+=1;
@@ -220,8 +223,7 @@ function newGame(){
 	
 				else
 				{
-				printboard(board_size);
-				//startGame();
+				startGame(parseInt(players),parseInt(board_size),parseInt(win_sequence));
 				}
 			}
 			
