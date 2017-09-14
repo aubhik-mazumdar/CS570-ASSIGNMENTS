@@ -2,14 +2,15 @@ const stream = require('stream');
 const fs = require('fs');
 const readline = require('readline-sync');
 
-function game(p,bs,w,arr){
+function game(p,bs,w,arr){ //creates a game object
+
 	this.players = p;
 	this.board_size = bs;
 	this.win_sequence = w;
 	this.array = arr;
 }
 
-function displayBoard(chars){
+function displayBoard(chars){ //displays the board
 	//console.log(chars);
 /* -----
 	-----PRINT BOARD WITH SYMBOLS IN RIGHT PLACES
@@ -17,24 +18,12 @@ function displayBoard(chars){
 */
 }
 
-function saveGame(game){
+function saveGame(game){ // saves input to solution.txt
 let obj=JSON.stringify(game);
 fs.writeFileSync("Solution.txt",obj);
 }
 
-function arraysearch(arr1,arr2){
-	let i=0,flag=0;
-	[a1,a2,a3]= arr1;
-	for(i in arr2){
-		[b1,b2,b3]=arr2[i];
-		if(a1==b1 && a2==b2 && a3==b3){
-			flag=1;
-		}
-	}
-	return flag;
-}
-
-function checkWin(lastmove,moves,win,bs,darray){
+function checkWin(lastmove,moves,win,bs,darray){ // checks for win, displays the moves of players on board
 	let rn=0,cn=0,s='',r=0,c=0,sym="",count=0,chars = "";
 	[rn,cn,s]  = lastmove;
 	let wincount=0,i=0,j=0,k=0;
@@ -94,14 +83,14 @@ function checkWin(lastmove,moves,win,bs,darray){
 	}
 }	
 
-function checkMove(gameObject,turn,darray){
+function checkMove(gameObject,turn,darray){ //checking the wins
 	displayBoard();
 	moves = gameObject["array"];
 	let lastMove = moves[moves.length-1];
 	checkWin(lastMove,moves,gameObject['win_sequence'],gameObject['board_size'],darray);
 }
 
-function startGame(p,bs,w){
+function startGame(p,bs,w){ //Starts a new game
 	let symbols="XOABCDEFGHIJKLMNPQRSTUVWYZ",s='';
 	let arr=[],turn=0;
 	let ngame= new game(p,bs,w,arr);
@@ -134,7 +123,7 @@ function startGame(p,bs,w){
 	}
 }
 
-function printboard(board_size){
+function printboard(board_size){ //displays and prints the board
 	let i=1,j=1;
 	process.stdout.write(" ");
 	for(i=1;i<=board_size;i++){
@@ -166,7 +155,7 @@ function printboard(board_size){
 	console.log();
 }
 
-function loadGame(fileName){
+function loadGame(fileName){ //loads the saved game
 	let data= fs.readFileSync(fileName);
 	data = data.toString();
 	data=data.trim();
@@ -189,7 +178,7 @@ function loadGame(fileName){
 
 
 
-function newGame(){
+function newGame(){ //Starts the new game
 	let players=0;
 	let board_size=0;
 	let win_sequence=0;
