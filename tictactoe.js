@@ -1,29 +1,45 @@
+/*
+
+CS 570(A)
+GROUP MEMBERS
+Mrunmayee Salunke
+Aubhik Mazumdar
+Siddhesh Prabhu
+
+TIC TAC TOE
+ */
+
+
+
 const stream = require('stream');
 const fs = require('fs');
 const readline = require('readline-sync');
 
-function game(p,bs,w,arr){ //creates a game object
 
+//creates a game object
+function game(p,bs,w,arr){
 	this.players = p;
 	this.board_size = bs;
 	this.win_sequence = w;
 	this.array = arr;
 }
 
-function displayBoard(chars){ //displays the board
-	//console.log(chars);
+//displays the board
+function displayBoard(chars){
 /* -----
 	-----PRINT BOARD WITH SYMBOLS IN RIGHT PLACES
 	----
 */
 }
 
-function saveGame(game){ // saves input to solution.txt
+// saves input to solution.txt
+function saveGame(game){
 let obj=JSON.stringify(game);
-fs.writeFileSync("Solution.txt",obj);
+fs.writeFileSync("solution.txt",obj);
 }
 
-function checkWin(lastmove,moves,win,bs,darray){ // checks for win, displays the moves of players on board
+// checks for win, displays the moves 
+function checkWin(lastmove,moves,win,bs,darray){
 	let rn=0,cn=0,s='',r=0,c=0,sym="",count=0,chars = "";
 	[rn,cn,s]  = lastmove;
 	let wincount=0,i=0,j=0,k=0;
@@ -35,7 +51,6 @@ function checkWin(lastmove,moves,win,bs,darray){ // checks for win, displays the
 		chars += sym;
 	}
 	console.log(darray);
-	console.log(chars);
 	displayBoard(chars);
 
 	//for each cell
@@ -44,13 +59,14 @@ function checkWin(lastmove,moves,win,bs,darray){ // checks for win, displays the
 		for(j=0;j<bs;j++)
 		{
 			//check for row
+
 			while(i<bs && j+k<bs && darray[i][j+k]==s)
 			{
 				k++;
 				wincount+=1;
 				if(wincount==win){
 					console.log("player " + s + " wins");
-					return; 
+					return 1; 
 				}
 			}
 			wincount=0;
@@ -62,7 +78,7 @@ function checkWin(lastmove,moves,win,bs,darray){ // checks for win, displays the
 				wincount+=1;
 				if(wincount==win){
 					console.log("player " + s + " wins");
-					return;
+					return 1;
 				}
 			}
 			wincount=0;
@@ -74,27 +90,36 @@ function checkWin(lastmove,moves,win,bs,darray){ // checks for win, displays the
 				wincount+=1;
 				if(wincount==win){
 					console.log("player " + s + " wins");
-					return;
+					return 1;
 				}
 			}
 			wincount=0;
 			k=0;
+			break;
 		}
 	}
 }	
 
-function checkMove(gameObject,turn,darray){ //checking the wins
-	displayBoard();
+//Check the viability of the moves(incomplete)
+function checkMove(gameObject,turn,darray){
 	moves = gameObject["array"];
 	let lastMove = moves[moves.length-1];
-	checkWin(lastMove,moves,gameObject['win_sequence'],gameObject['board_size'],darray);
+	return checkWin(lastMove,moves,gameObject['win_sequence'],gameObject['board_size'],darray);
 }
 
-function startGame(p,bs,w){ //Starts a new game
+
+//Starts a new game
+function startGame(p,bs,w,load){
 	let symbols="XOABCDEFGHIJKLMNPQRSTUVWYZ",s='';
 	let arr=[],turn=0;
 	let ngame= new game(p,bs,w,arr);
-	console.log(ngame); 
+	if(load === undefined){
+		ngame= new game(p,bs,w,arr);
+	}
+	else{
+		ngame = load;
+		turn = ngame['array'].length;
+	} 
 	printboard(bs);
 	let darray = [];
 	for(i=0;i<bs;i++){
@@ -102,7 +127,7 @@ function startGame(p,bs,w){ //Starts a new game
 	}
 	while(1)
 	{
-		move=readline.question("Enter your move player "+ (turn % p) +" , row and column, or Q to quit or s to save the game, or l to load:");
+		move=readline.question("Enter your move player "+ (turn % p) +" , row and column, or Q to quit or S to save the game:");
 		if(move === 'Q' || move ==='q')
 			break;
 		if(move==='s' || move === 'S')
@@ -110,20 +135,21 @@ function startGame(p,bs,w){ //Starts a new game
 				saveGame(ngame);
 				break;
 			}
-		if(move==='l' || move === 'L')
-			{
-				//loadGame(ngame);
-				break;
-			}
 		[row,column]=move.split(" ");
 		s=symbols.charAt(turn % p);
-		ngame["array"].push([row,column,s]);
-		checkMove(ngame,turn,darray);
+		ngame['array'].push([row,column,s]);
+		if(checkMove(ngame,turn,darray)==1)
+			return;
 		turn+=1;
+		if (turn>bs*bs){
+			console.log("TIE HAS OCCURED")
+			return;
+		}
 	}
 }
 
-function printboard(board_size){ //displays and prints the board
+//displays and prints the board
+function printboard(board_size){
 	let i=1,j=1;
 	process.stdout.write(" ");
 	for(i=1;i<=board_size;i++){
@@ -155,30 +181,24 @@ function printboard(board_size){ //displays and prints the board
 	console.log();
 }
 
-function loadGame(fileName){ //loads the saved game
-	let data= fs.readFileSync(fileName);
-	data = data.toString();
-	data=data.trim();
-	//console.log(data);
-	// = data.split(',',3);
-	let array = [];
-	let gamedata=data.split("\r\n");
-	for(i=0;i<gamedata.length;i++)
-	{
-			array[i]=gamedata[i].split(",");
+
+//loads the saved game
+function loadGame(fileName){
+	let data;
+	try{
+		 data= fs.readFileSync(fileName);
+			}
+	catch (err) {
+            console.log("File does not exist. ");
 	}
-	for(i in array)
-		array[i].pop();
-	let temp= array.splice(0,1);
-	[players,board_size,win_sequence]=temp[0];
-	console.log(temp);
-	console.log(array);
-	console.log(players, board_size, win_sequence);
+	data = data.toString();
+	let obj = JSON.parse(data);
+	startGame(obj['players'],obj['board_size'],obj['win_sequence'],obj);
+
 }
 
-
-
-function newGame(){ //Starts the new game
+//Starts the new game
+function newGame(){
 	let players=0;
 	let board_size=0;
 	let win_sequence=0;
@@ -223,20 +243,14 @@ function newGame(){ //Starts the new game
 			Error;
 					}
 	
-				//console.log(players,board_size,win_sequence);
-	
 				else
 				{
-				startGame(parseInt(players),parseInt(board_size),parseInt(win_sequence));
+					startGame(parseInt(players),parseInt(board_size),parseInt(win_sequence));
 				}
 			}
-			
 		}
 	
 }
-
-
-
 /* Using module 'readline-sync' */
 //MAIN FUNCTION START
 let fileName = readline.question("Hello USER, enter the file name if you wish to load a saved game or press enter to start a new game:");
