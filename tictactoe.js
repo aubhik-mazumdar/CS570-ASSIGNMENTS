@@ -10,7 +10,7 @@ function game(p,bs,w,arr){
 }
 
 function displayBoard(chars){
-	console.log(chars);
+	//console.log(chars);
 /* -----
 	-----PRINT BOARD WITH SYMBOLS IN RIGHT PLACES
 	----
@@ -45,6 +45,8 @@ function checkWin(lastmove,moves,win,bs,darray){
 		darray[r][c]= sym;
 		chars += sym;
 	}
+	console.log(darray);
+	console.log(chars);
 	displayBoard(chars);
 
 	//for each cell
@@ -109,8 +111,21 @@ function startGame(p,bs,w){
 	for(i=0;i<bs;i++){
 		darray.push(Array(bs).fill(' '));
 	}
-	while(move=readline.question("Enter your move player "+ (turn % p) +" , row and column:"))
+	while(1)
 	{
+		move=readline.question("Enter your move player "+ (turn % p) +" , row and column, or Q to quit or s to save the game, or l to load:");
+		if(move === 'Q' || move ==='q')
+			break;
+		if(move==='s' || move === 'S')
+			{
+				saveGame(ngame);
+				break;
+			}
+		if(move==='l' || move === 'L')
+			{
+				//loadGame(ngame);
+				break;
+			}
 		[row,column]=move.split(" ");
 		s=symbols.charAt(turn % p);
 		ngame["array"].push([row,column,s]);
