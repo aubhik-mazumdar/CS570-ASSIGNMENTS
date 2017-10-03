@@ -1,15 +1,22 @@
 import * as readline from 'readline-sync';
 let read: string = readline.question('enter expression: ');
-let infix = read.split('');
+let res:string = read.replace(/ /g,"");
+res = res.replace(/POW/g,"^");
+let infix = res.split('');
+
 let stack = new Array();
 let postfix = new Array();
 
 
 let str = convert(infix);
-//calculate(str);
+calculate(str);
 
 function precedence(t:string){
-	let pre = '*/+-%';
+	if(t == '+' || t=='-')
+		return 3;
+	if(t == '*' || t=='/')
+		return 1;
+	let pre = '^*/+-%';
 	return pre.indexOf(t);
 }
 
@@ -54,6 +61,41 @@ while(stack.length!=0){
 	postfix.push(stack[stack.length-1]);
 	stack.pop();
 }
+let x = postfix.join(" ");
+console.log("THE POSTFIX EXPRESSION IS-");
+console.log(x);
 return postfix;
+}
 
+function calculate(postfix){
+    
+    let cal=[];
+    
+    let topNum,nextNum,answer;
+    
+
+    while(postfix.length!=0){
+        let t = postfix.shift();
+
+        if(parseFloat(t)){
+            cal.push(parseFloat(t));
+            continue
+        }
+
+        else{
+        let topNum = cal.pop();
+        let nextNum = cal.pop();
+    
+    switch(t){
+        case '+': answer = nextNum + topNum;break;
+        case '-': answer = nextNum - topNum;break;
+        case '*': answer = nextNum * topNum;break;
+        case '/': answer = nextNum / topNum;break;
+        case '^': answer = Math.pow(nextNum,topNum);break;
+    }
+    cal.push(answer);
+    }
+	}
+	console.log("THE RESULT OBTAINED IS-")
+	console.log(cal.pop());
 }
