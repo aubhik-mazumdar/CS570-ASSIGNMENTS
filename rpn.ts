@@ -5,17 +5,19 @@ let stack = new Array();
 let postfix = new Array();
 
 
-console.log(infix);
-let t='';
+let str = convert(infix);
+//calculate(str);
 
 function precedence(t:string){
 	let pre = '*/+-%';
 	return pre.indexOf(t);
 }
 
-
-while(infix.length)
+function convert(infix:string[])
 {
+	while(infix.length)
+{
+	let t:string='';
 	t = infix.shift()
 	if(parseInt(t) || t=='0'){
 		let num:string='';
@@ -52,4 +54,6 @@ while(stack.length!=0){
 	postfix.push(stack[stack.length-1]);
 	stack.pop();
 }
-console.log(postfix);
+return postfix;
+
+}
