@@ -1,15 +1,21 @@
 import * as readline from 'readline-sync';
-let read: string = readline.question('enter expression: ');
-let res:string = read.replace(/ /g,"");
-res = res.replace(/POW/g,"^");
-let infix = res.split('');
 
-let stack = new Array();
-let postfix = new Array();
+main();
 
+function main(){
+	let read:string='';
+	while(true){
+		read = readline.question('enter expression: ');
+		if(read === 'quit')
+			return;
+		let res:string = read.replace(/ /g,"");
+		res = res.replace(/POW/g,"^");
+		let infix = res.split('');
+		let str = convert(infix);
+		calculate(str);
+	}
+}
 
-let str = convert(infix);
-calculate(str);
 
 function precedence(t:string){
 	if(t == '+' || t=='-')
@@ -22,8 +28,10 @@ function precedence(t:string){
 
 function convert(infix:string[])
 {
+	let stack = new Array();
+	let postfix = new Array();
 	while(infix.length)
-{
+	{
 	let t:string='';
 	t = infix.shift()
 	if(parseInt(t) || t=='0'){
@@ -55,11 +63,11 @@ function convert(infix:string[])
 			stack.pop();
 		} 
 		stack.push(t);
+		}
 	}
-}
-while(stack.length!=0){
-	postfix.push(stack[stack.length-1]);
-	stack.pop();
+	while(stack.length!=0){
+		postfix.push(stack[stack.length-1]);
+		stack.pop();
 }
 let x = postfix.join(" ");
 console.log("THE POSTFIX EXPRESSION IS-");
