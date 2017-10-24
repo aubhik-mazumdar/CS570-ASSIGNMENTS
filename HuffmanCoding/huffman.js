@@ -1,7 +1,6 @@
 const fs = require('fs');
 const readline = require('readline-sync');
 
-
 class tree_node{
 	constructor(lchild,rchild,par){
 		this.leftchild = lchild;
@@ -25,6 +24,9 @@ class forest_roots{
 	}
 }
 
+main();
+
+
 function addto(heap,value)
 {
 	heap.push(value);
@@ -46,7 +48,6 @@ function bubbleUp(heap,idx){
 function remove(heap){
 	
 	//find first node with children
-	//heapify(heap,0);
 	let temp = heap[0];
 	heap[0]=heap[heap.length-1];
 	heap[heap.length-1]=temp;
@@ -81,21 +82,33 @@ function build_huffman_tree(frequencies){
 	for(let i in frequencies){
 		let newSymbol = new symbol_info(frequencies[i][0],frequencies[i][1],Number(i)+1);
 		let newFor = new forest_roots(frequencies[i][1],Number(i)+1);
-		let newTree = new tree_node(0,0,0);
 		alphabet.push(newSymbol);
-		tree.push(newTree);
 		addto(forest,newFor);
 	}
 	tree.shift();
 	alphabet.shift();
-	
 	compress(forest,alphabet,tree);
-	console.log(forest);
-	console.log(tree);
+	let codes = new Array(Number(forest[0].root)).fill('');
+	codes = build_codes(tree,codes);
+	let huffman_codes = [];
+	for(let i=0;i<frequencies.length;i++){
+		huffman_codes.push([frequencies[i][0],codes[i]]);
+	}
+	console.log(huffman_codes);
+	return huffman_codes;
+}
+
+function build_codes(tree,codes){
+	for(let i=tree.length-1;i>=0;i--){
+		let c = tree[i];
+		codes[c.leftchild-1]=codes[c.parent-1]+'0';
+		codes[c.rightchild-1]=codes[c.parent-1]+'1';
+	}
+	return codes;
 }
 
 function compress(forest,alphabet,tree){
-	let newParent = tree.length + 1;
+	let newParent = alphabet.length + 1;
 	while(forest.length>1){
 		let least = remove(forest);
 		let second = remove(forest);
@@ -106,35 +119,71 @@ function compress(forest,alphabet,tree){
 		newParent++;
 	}
 }
-
-let infile = fs.readFileSync('infile.dat', 'UTF-8');
-let count = 0;
-//string of length = 250
-let freq = {};
-for (let i=0; i<infile.length;i++) {
-    c = infile[i];
-    if(c.match(/[a-zA-Z0-9]/)){
-    	count++;
-	    if (freq[c]) {
-	       freq[c]++;
-	    } 
-	    else {
-	       freq[c] = 1;
-	    }
+function main(){
+	let input = readline.question("Enter the path+filename: ");
+	let infile='';
+	if(!input)
+		infile = fs.readFileSync('infile.dat', 'UTF-8');
+	else{
+		try{
+			infile = fs.readFileSync(input, 'UTF-8');
+		}
+		catch(err){
+				throw new Error("File doesnt exist");
+				process.exit;
+		}
 	}
-}
-var sortable = [];
-for (var e in freq) {
-    sortable.push([e, freq[e]]);
-}
+	let count = 0;
+	let freq = {};
+	for (let i=0; i<infile.length;i++) {
+	    c = infile[i];
+	    if(c.match(/[a-zA-Z0-9]/)){
+	    	count++;
+		    if (freq[c]) {
+		       freq[c]++;
+		    } 
+		    else {
+		       freq[c] = 1;
+		    }
+		}
+	}
+	let sortable = [];
+	for (let e in freq) {
+	    sortable.push([e, freq[e]]);
+	}
 
-sortable.sort(function(a, b) {
-    return b[1] - a[1];
-});
-console.log(sortable);
-let percentages = [];
-for(let i in sortable){
-	percentages.push([sortable[i][0],((sortable[i][1] / count)*100).toFixed(4)])
+	sortable.sort(function(a, b) {
+	    return b[1] - a[1];
+	});
+	let percentages = [];
+	for(let i in sortable){
+		percentages.push([sortable[i][0],((sortable[i][1] / count)*100).toFixed(4)])
+	}
+	let datfile = 'outfile.dat';
+	let writeStream = fs.createWriteStream(datfile);
+	writeStream.write('SYMBOL         FREQUENCY\n');
+	while(percentages.length){
+		c = percentages.shift();
+		writeStream.write(c[0]+"               "+c[1]+"\n");
+	}
+
+	let huffman = build_huffman_tree(sortable);
+	writeStream.write('SYMBOL         CODE\n');
+	for(i=0;i<huffman.length;i++){
+		c = huffman[i];
+		writeStream.write(c[0]+"               "+c[1]+"\n");
+	}
+	let record = new Map();
+	for(let c of huffman){
+				record.set(c[0],c[1]);
+		}
+		let str ='';
+	for (let i=0; i<infile.length;i++) {
+	    c = infile[i];
+	    if(c.match(/[a-zA-Z0-9]/)){
+	    	str += record.get(c);
+		}
+	}
+	writeStream.write("The length of the coded message in bits:"+str.length);
+	writeStream.end();
 }
-console.log(percentages);
-build_huffman_tree(sortable);
