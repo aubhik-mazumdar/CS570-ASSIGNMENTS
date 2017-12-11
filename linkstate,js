@@ -1,4 +1,4 @@
-const rl = require('readline-sync');
+const readline = require('readline-sync');
 const fs = require('fs');
 let allrouters = [];
 let idnumber = 0;
@@ -12,7 +12,7 @@ class lsp{
 							costs:[] 
 						};
 		this.ttl = 10;
-		this.sq = 1;
+		this.seq = 1;
 		this.origin = id;
 	}
 }
@@ -60,7 +60,7 @@ class router{
 				});
 				
 			}	
-		console.log(this.neighbourRouters);
+		//console.log(this.neighbourRouters);
 		this.createRouterTable();	
 		}
 
@@ -76,23 +76,56 @@ class router{
 	}
 
 	receivePacket(packet,origin){
+		let cost = [], parent = [];
 		if(!this.active)
 			return;
-		packet.ttl--;
-		if(packet.ttl<1 || !isValid(packet,origin)){
-			//discard packet
-			return;
+		//if(packet.origin==this.id)
+			//return;
+		if(packet.ttl<1 || !this.isValid(packet,packet.origin)){
+				//discard packet
+				return;
 		}
-		else{
-			//compare information, update graph
-			this.packets.push(packet);
-			this.compare(packet);
-			this.runDijkstra(this.graph);
-
+		console.log("packet from ",origin," received by ", this.network);
+		packet.ttl--;
+		//compare information, update graph
+		this.packets.push(packet);
+		this.compare(packet,origin);
+		[cost, parent] = this.runDijkstra(this.graph,this.workId);
+		this.updateRouterTable(cost, parent);
+		for(let n of this.neighbourRouters){
+			if(n['router'].id!=origin){
+				n['router'].receivePacket(packet,this.id);
+			}
 		}
 	}
+
+	updateRouterTable(cost, parent){
+		//this.routerTable = [];
+
+		// for(let i=0;i<routerCount;i++){
+		// 	if(this.routerTable[i] && this.routerTable[i][2]>=cost[i]){
+		// 		this.routerTable[i][1] = parent[i];
+		// 		this.routerTable[i][2] = cost[i];
+		// 	}
+		// 	else{
+		// 		this.routerTable.push([allrouters[i].network,parent[i],cost[i]]);
+		// 	}			
+		// 	console.log(this.routerTable);
+		// }
+	}
+
+	compare(pck,origin){
+		//console.log(pck.info);
+		for(let i=0;i<pck.info.routers.length;i++){
+			let p = mapping.get(pck.origin);
+			this.graph[p][pck.info.routers[i].workId] = pck.info.costs[i];
+			this.graph[pck.info.routers[i].workId][p] = pck.info.costs[i];
+		}
+		//console.log(this.graph);
+	}
+
 	isValid(packet,src){
-		let temp = this.packets.filter(val=>val.origin==src);
+		let temp = this.packets.filter(val=>val.origin==packet.origin);
 		for(let i of temp){
 			if(i.seq>=packet.seq){
 				return false;
@@ -100,24 +133,20 @@ class router{
 		}
 		return true;
 	}
-	compare(pck){
-		for(let i=0;i<pck.info.routers.lenth;i++){
-			let p = mapping.get(pck.origin);
-			if(this.graph[p][pck.info.routers[i].workId]>pck.info.costs[i]){
-				this.graph[p][pck.info.routers[i].workId] = pck.info.costs[i];
-				this.graph[pck.info.routers[i].workId][p] = pck.info.costs[i];
-			}
-		}
-	}
+	
+
 	runDijkstra(graph,src){
-		let dist = [];
+		let dist = new Array(routerCount).fill(Infinity);
 		let sptSet = new Array(routerCount).fill(false);
 		let parent = new Array(routerCount).fill(-1);
-		for(let i=0;i<routerCount;i++){
-			dist.push(Infinity);
-		}
+		let prev = [];
+		let path = {};
 		dist[src]=0;
-		for(let count=0;count<routerCount-1;count++){
+		//console.log(graph);
+		for(let i=0;i<routerCount;i++){
+			path[i] = [];
+		}
+		for(let count=0;count<routerCount;count++){
 			let u = this.minimumdist(dist,sptSet);
 			sptSet[u] = true;
 			for(let v = 0;v<routerCount;v++){
@@ -127,8 +156,24 @@ class router{
 				}
 			}
 		}
-		[vertex, cost, path]=this.solve(dist, routerCount, parent, src);	
+		//console.log(dist,parent);
+		for (let v=0;v<routerCount;v++) 
+		{
+			let u = v;
+			
+			while (parent[u] != -1) {
+				path[v].unshift(Number(u));
+				u = parent[u];
+			}
+		}
+		for(let i in path){
+			let temp = path[i].shift();
+			prev.push(temp);
+		}
+		console.log(dist,prev);
+		return [dist, prev];	
 	}
+	
 	minimumdist(dist,sptSet){
 		let min = Infinity;
 		let minindex = 0;
@@ -141,44 +186,24 @@ class router{
 		}
 		return minindex;
 	}
-	solve(dist, routerCount, parent, src){
-		let v = [];
-		let c= [];
-		let p = [];
-		for(let i=0;i<routerCount;i++){
-			v.push(i);
-			if(i==src){
-				c.push(0);
-				p.push('');
-				continue;
-			}
-			c.push(dist[i]);
-			s='';
-			this.findpath(parent,i,s);
-			p.push(s);
-		}
-		return [v,c,p];
-	}
-	findpath(parent,j,s){
-		if(parent[j]==-1)
-			return;
-		this.findpath(parent,parent[j],s);
-		s+=j;
-	}
+
+	
 	//So initially every router calls originatePacket which calls receivePacket
 	//on all the neighbouring routers which again originate packets on the rest
 	//of the routers until all the routers have received the packet 
 	originatePacket(){
 		if(!this.active)
 			return;
+		console.log("packet originated by ",this.network);
 		this.checktick();
 		let newlsp = this.generateLsp();
+		this.packets.push(newlsp);
 		for(let n of this.neighbourRouters){
 			n['router'].receivePacket(newlsp,this.id);
 		}
 	}
 	generateLsp(){
-		pck = new lsp(this.id);
+		let pck = new lsp(this.id);
 		for(let n of this.neighbourRouters){
 			pck.info.routers.push(n.router);
 			pck.info.networks.push(n.router.network);
@@ -196,6 +221,21 @@ class router{
 		}
 	}
 
+	printTable(){
+		console.log("	NETWORK", "OUTGOING LINK", "COST");
+		for(let row of this.routerTable){
+			console.log(row[0],row[1],row[2]);
+		}
+	}
+
+	shutdown(){
+		this.active=false;
+		console.log("router ", this.network," shutdown");
+	}
+	startRouter(){
+		this.active = true;
+		console.log("router ", this.network, " started");
+	}
 }
 	
 
@@ -236,8 +276,10 @@ function readfile(){
 		allrouters[j].addNeighbours();
 	}
 }
+
 function main(){
 	readfile();
+	console.log("[*]File infile.dat has been read and routers have been initialized");
 	while(true){
 		 console.log("If you want to continue Enter: C");
 		 console.log("If you want to quit Enter: Q");
@@ -250,8 +292,10 @@ function main(){
  
 		 if(p.length==1)
 			 {
-				 if(p[0] =="C")
-					 continue;
+				 if(p[0] =="C"){
+					 continuefxn();
+				 }
+					 
 				 
 				 else if(p[0]=="Q")
 					 break;
@@ -263,22 +307,15 @@ function main(){
 		 else if (p.length==2){
 			 
 			if(p[0]=="P"){
-					 
-					 if (router[p[1]].status == "start") {                        //To check the status of the router 
-					 console.log(router[p[1]].print_table);                       // To print routing table
-						  }
-					 
-					 else {
-					 console.log(p + " is shutdown now");
-						  }
+					printRouterTable(p[1]);  
 				 }
  
 			 else if (p[0] == "S") {
-				 router[p[1]].status = "stop";                                    //To stop the router
+				 	shutdownRouter(p[1]);                                    //To stop the router
 				 }
  
 			 else if (p[0] == "T") {
-				 router[p[1]].status = "start";                                  //To start the router
+				 	start(p[0]);                                  //To start the router
 				 }
 				 
 			 else
@@ -291,5 +328,21 @@ function main(){
 	 }
  }
  }
- 
+
+ function continuefxn(){
+	 for(let r of allrouters){
+		 r.originatePacket();
+	 }
+	 console.log("[*]Originate Packet called on all routers");
+ }
+ function printRouterTable(id){
+	 allrouters[mapping.get(id)].printTable();
+ }
+
+ function shutdownRouter(id){
+	 allrouters[mapping.get(id)].shutdown();
+ }
+ function start(id){
+	 allrouters[mapping.get(id)].startRouter();
+ }
 main();
